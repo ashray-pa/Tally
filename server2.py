@@ -40,13 +40,18 @@ def handle_connections():
                         if req_type == 'msg':
                             message = mess_.split("\r\n\r\n")[1]
                             utils.send_ack(conn_r)
-                                
+                            
                             for conn_s in writeables:
                                 try:
                                     print(message)
                                     conn_s.send(utils.post_res('msg', message).encode())
                                 except BrokenPipeError:
                                     pass
+
+                        elif req_type == 'ping':
+                            print("pinged")
+                            utils.send_ack(conn_r)
+
                         elif not mess_:
                             print('Disconnected',conn_r)
                             if conn_r in connections:

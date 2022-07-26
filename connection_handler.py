@@ -1,6 +1,7 @@
 import socket
 import sys
 import time
+from ping3 import ping
 
 from utils import Utilities
 
@@ -45,7 +46,7 @@ class Connection:
 
     def ping_(self):
         try:
-            self.sock.send(PING_CODE.encode(FORMAT))
+            self.sock.send(utils.get_req("ping", PING_CODE).encode())
             time.sleep(5)
         except Exception as e:
             self.server_status = "down"
@@ -53,5 +54,15 @@ class Connection:
 
     def closeConn(self):
         self.sock.close()
+
+    # def ping(self):
+    #     res = ping(self.host)
+    #     if res==False:
+    #         self.server_status = "down"
+    #         self.server_down_close()
+    #     else:
+    #         print("pinged")
+    #         time.sleep(5)
+    #         ping()
 
 #to test
