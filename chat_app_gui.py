@@ -88,6 +88,7 @@ class ChatApp:
                         res_type = line.split(': ')[1]
 
                 if(res_type == 'ack'):
+                    print('HTTP/1.1 200 OK message sent')
                     self.notify.place(relx=1.0, rely=0.0, anchor = 'ne')
                     self.notify.after(2000, lambda: self.notify.place_forget())
 
