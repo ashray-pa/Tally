@@ -2,7 +2,6 @@ import socket
 import sys
 import time
 from ping3 import ping
-
 from utils import Utilities
 
 FORMAT = "utf-8"

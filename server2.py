@@ -4,6 +4,7 @@ import socket
 import threading
 import select
 import sys
+import time
 
 from connection_handler import Connection
 from utils import Utilities
@@ -33,26 +34,38 @@ def handle_connections():
                     try:
                         mess_ = conn_r.recv(HEADER).decode(FORMAT)
                         req_type = ''
-                        for line in mess_.split('\r\n'):
-                            if(line.split(': ')[0] == 'Req-Type'):
-                                req_type = line.split(': ')[1]
+                        res_type = ''
+                        if not mess_.startswith("HTTP"):
+                            for line in mess_.split('\r\n'):
+                                if(line.split(': ')[0] == 'Req-Type'):
+                                    req_type = line.split(': ')[1]
 
-                        if req_type == 'msg':
-                            message = mess_.split("\r\n\r\n")[1]
-                            utils.send_ack(conn_r)
-                            
-                            for conn_s in writeables:
-                                try:
-                                    print(message)
-                                    conn_s.send(utils.post_res('msg', message).encode())
-                                except BrokenPipeError:
-                                    pass
+                            if req_type == 'msg':
+                                message = mess_.split("\r\n\r\n")[1]
+                                utils.send_ack(socket=conn_r, isMsg=True)
+                    
+                                for conn_s in writeables:
+                                    try:
+                                        #sendToEachClient(conn_s, message)
+                                        writeToEach = threading.Thread(target=sendToEachClient, args=(conn_s, message))
+                                        writeToEach.start()
 
-                        elif req_type == 'ping':
-                            print("pinged")
-                            utils.send_ack(conn_r)
+                                    except BrokenPipeError:
+                                        pass
 
-                        elif not mess_:
+                            elif req_type == 'ping':
+                                print("pinged by:", conn_r.getpeername())
+                                utils.send_ack(socket=conn_r, isMsg=False)
+
+                        else:
+                            for line in mess_.split('\r\n'):
+                                if(line.split(': ')[0] == 'Res-Type'):
+                                    res_type = line.split(': ')[1]
+
+                            if res_type == 'ack':
+                                print("message received by:", conn_r.getpeername())
+
+                        if not mess_:
                             print('Disconnected',conn_r)
                             if conn_r in connections:
                                 connections.remove(conn_r)
@@ -79,6 +92,11 @@ def receive():
         client.setblocking(0)
         connections.append(client)
 
+def sendToEachClient(socket, message):
+    socket.send(utils.post_req('msg', message).encode())
+    for i in range(5):                          #to show this method runs in a separate thread, without disturbing the recieving thread
+        print("testing testing...")
+        time.sleep(1)
 
 print("--- server running ---")
 print(f"{HOST} is listening")

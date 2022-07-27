@@ -3,9 +3,11 @@ import tkinter
 from tkinter import simpledialog
 import tkinter.scrolledtext
 from connection_handler import Connection
+from utils import Utilities
 
 HOST = "127.0.1.1"
 PORT = 9095
+utils = Utilities()
 
 class ChatApp:
     def __init__(self):
@@ -81,23 +83,34 @@ class ChatApp:
         while self.conn.running:
             try:
                 res_type = ""
+                req_type = ""
                 mess_ = self.conn.recvFun()
 
-                for line in mess_.split('\r\n'):
-                    if(line.split(': ')[0] == 'Res-Type'):
-                        res_type = line.split(': ')[1]
+                if mess_.startswith("HTTP"):
+                    for line in mess_.split('\r\n'):
+                        if(line.split(': ')[0] == 'Res-Type'):
+                            res_type = line.split(': ')[1]
+                    if self.gui_done:
+                        if res_type == 'ack':
+                            print('HTTP/1.1 200 OK message sent')
+                            self.notify.place(relx=1.0, rely=0.0, anchor = 'ne')
+                            self.notify.after(2000, lambda: self.notify.place_forget())
 
-                if(res_type == 'ack'):
-                    print('HTTP/1.1 200 OK message sent')
-                    self.notify.place(relx=1.0, rely=0.0, anchor = 'ne')
-                    self.notify.after(2000, lambda: self.notify.place_forget())
+                        elif res_type == 'ackp':
+                            pass
 
-                elif self.gui_done and res_type=='msg':
-                    message = mess_.split("\r\n\r\n")[1]
-                    self.text_area.config(state="normal")
-                    self.text_area.insert("end", message)
-                    self.text_area.yview("end")
-                    self.text_area.config(state="disabled")
+                else:
+                    for line in mess_.split('\r\n'):
+                        if(line.split(': ')[0] == 'Req-Type'):
+                            req_type = line.split(': ')[1]
+
+                    if req_type=='msg':
+                        message = mess_.split("\r\n\r\n")[1]
+                        self.text_area.config(state="normal")
+                        self.text_area.insert("end", message)
+                        self.text_area.yview("end")
+                        self.text_area.config(state="disabled")
+                        utils.send_ack(socket=self.conn.sock, isMsg=True)
 
             except ConnectionAbortedError:
                 break
