@@ -12,12 +12,8 @@ from utils import Utilities
 HOST = "127.0.1.1"
 FORMAT = "utf-8"
 PORT = 9095
-clients = []
-names = []
 connections = []
-DISCONNECT_MESSAGE = "disconnect"
 HEADER = 1024
-PING_CODE = "pingCheck"
 
 
 serverConn = Connection(HOST, PORT)
@@ -43,18 +39,11 @@ def handle_connections():
                             if req_type == 'msg':
                                 message = mess_.split("\r\n\r\n")[1]
                                 utils.send_ack(socket=conn_r, isMsg=True)
-                    
-                                for conn_s in writeables:
-                                    try:
-                                        #sendToEachClient(conn_s, message)
-                                        writeToEach = threading.Thread(target=sendToEachClient, args=(conn_s, message))
-                                        writeToEach.start()
-
-                                    except BrokenPipeError:
-                                        pass
+                                writeToAll = threading.Thread(target=sendToAllClients, args=(writeables, message))
+                                writeToAll.start()
 
                             elif req_type == 'ping':
-                                print("pinged by:", conn_r.getpeername())
+                                #print("pinged by:", conn_r.getpeername())
                                 utils.send_ack(socket=conn_r, isMsg=False)
 
                         else:
@@ -88,15 +77,31 @@ def receive():
     while True:
         client, addr = serverConn.accept_connection()
         print(f"connected {str(addr)}")
-        clients.append(client)
         client.setblocking(0)
         connections.append(client)
 
 def sendToEachClient(socket, message):
     socket.send(utils.post_req('msg', message).encode())
-    for i in range(5):                          #to show this method runs in a separate thread, without disturbing the recieving thread
-        print("testing testing...")
-        time.sleep(1)
+
+    # try:
+    #     socket.setblocking(1)
+    #     socket.settimeout(5)
+    #     socket.recv(HEADER).decode(FORMAT)
+    #     socket.settimeout(0)
+    #     socket.setblocking(0)
+    #     print("(below)message received by:", socket.getpeername())
+    # except Exception as e:
+    #     print(e)
+
+def sendToAllClients(writeables, message):
+    for conn_s in writeables:
+        try:
+            #sendToEachClient(conn_s, message)
+            writeToEach = threading.Thread(target=sendToEachClient, args=(conn_s, message))
+            writeToEach.start()
+
+        except BrokenPipeError:
+            pass
 
 print("--- server running ---")
 print(f"{HOST} is listening")

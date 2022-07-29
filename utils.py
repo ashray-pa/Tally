@@ -11,6 +11,6 @@ class Utilities:
 
     def send_ack(self, socket, isMsg):
         if isMsg:
-            socket.send('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nRes-Type: ack'.encode())
+            socket.send('HTTP/1.1 \r\nContent-Type: text/html\r\nRes-Type: ack'.encode())
         else:
-            socket.send('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nRes-Type: ackp'.encode())
+            socket.send('HTTP/1.1 \r\nContent-Type: text/html\r\nRes-Type: ackp'.encode())
