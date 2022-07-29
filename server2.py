@@ -29,13 +29,20 @@ def handle_connections():
                 for conn_r in readables:
                     try:
                         mess_ = conn_r.recv(HEADER).decode(FORMAT)
+                        type = ''
                         req_type = ''
                         res_type = ''
-                        if not mess_.startswith("HTTP"):
-                            for line in mess_.split('\r\n'):
-                                if(line.split(': ')[0] == 'Req-Type'):
-                                    req_type = line.split(': ')[1]
 
+                        for line in mess_.split('\r\n'):
+                            if(line.split(': ')[0] == 'Req-Type' or line.split(': ')[0] == 'Res-Type'):
+                                if(line.split(': ')[0] == 'Req-Type'):
+                                    type = 'req'
+                                    req_type = line.split(': ')[1]
+                                else:
+                                    type = 'res'
+                                    res_type = line.split(': ')[1]
+
+                        if type == 'req':
                             if req_type == 'msg':
                                 message = mess_.split("\r\n\r\n")[1]
                                 utils.send_ack(socket=conn_r, isMsg=True)
@@ -46,11 +53,7 @@ def handle_connections():
                                 #print("pinged by:", conn_r.getpeername())
                                 utils.send_ack(socket=conn_r, isMsg=False)
 
-                        else:
-                            for line in mess_.split('\r\n'):
-                                if(line.split(': ')[0] == 'Res-Type'):
-                                    res_type = line.split(': ')[1]
-
+                        elif type == 'res':
                             if res_type == 'ack':
                                 print("message received by:", conn_r.getpeername())
 
