@@ -37,8 +37,8 @@ class Connection:
         self.running = False
         sys.exit()
 
-    def sendMessage(self, msg):
-        self.sock.send(utils.post_req("msg", msg).encode())
+    def sendMessage(self, msg, dt, id):
+        self.sock.send(utils.post_req("msg", msg, dt, id).encode())
 
     def recvFun(self):
         return self.sock.recv(1024).decode(FORMAT)
@@ -50,6 +50,9 @@ class Connection:
         except Exception as e:
             self.server_status = "down"
             self.server_down_close()
+
+    def recvId(self):
+        return self.sock.recv(1024).decode(FORMAT)
 
     def closeConn(self):
         self.sock.close()

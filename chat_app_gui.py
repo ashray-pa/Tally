@@ -1,3 +1,4 @@
+from datetime import datetime
 import threading
 import tkinter
 from tkinter import simpledialog
@@ -17,6 +18,8 @@ class ChatApp:
         msg.withdraw()
         self.name = simpledialog.askstring(
             "Name", "Enter your name", parent=msg)
+        self.client_id = self.conn.recvId().split('\r\n\r\n')[1]
+
         self.gui_done = False
         self.conn.running = True
 
@@ -69,7 +72,7 @@ class ChatApp:
     def write_(self):
         message = f"{self.name}: {self.msg_input.get('1.0', 'end')}"
         try:
-            self.conn.sendMessage(message)
+            self.conn.sendMessage(message, str(datetime.now()), self.client_id)
         except BrokenPipeError:
             print("----- server is down -----")
             self.server_down_cnt = self.server_down_cnt - 1
@@ -105,12 +108,20 @@ class ChatApp:
                             req_type = line.split(': ')[1]
 
                     if req_type=='msg':
+                        msg_sent_time = None
+                        client_id = None
+                        for line in mess_.split('\r\n'):
+                            if (line.split(': '))[0] == 'Time':
+                                msg_sent_time = line.split(': ')[1]
+                            elif (line.split(': '))[0] == 'ClientID':
+                                client_id = line.split(': ')[1]
+
                         message = mess_.split("\r\n\r\n")[1]
                         self.text_area.config(state="normal")
                         self.text_area.insert("end", message)
                         self.text_area.yview("end")
                         self.text_area.config(state="disabled")
-                        utils.send_ack(socket=self.conn.sock, isMsg=True)
+                        utils.send_ack(socket=self.conn.sock, isMsg=True, dt=msg_sent_time, id=client_id)
 
             except ConnectionAbortedError:
                 break

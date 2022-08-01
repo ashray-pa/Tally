@@ -1,20 +1,19 @@
+import threading
 import time
-from ping3 import ping
-from connection_handler import Connection
 
-HOST = "127.0.1.1"
-PORT = 9095
+a = {}
 
-client = Connection(HOST, PORT)
-client.connect_to_server()
+print(a)
 
-def ping1():
-        res = ping(HOST)
+def fun1():
+    global a
+    time.sleep(5)
+    a[5] = 7
+    print(a)
 
-        if res==False:
-            print("pinged")
-        else: 
-            time.sleep(5)
-            ping1()
+t1 = threading.Thread(target=fun1)
+#t2 = threading.Thread(target=fun2)
 
-ping1()
+t1.start()
+
+
