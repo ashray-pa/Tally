@@ -22,12 +22,25 @@ class Utilities:
 class Acknowldgements:
     def __init__(self, max_size):
         self.acks_for_msg__at = {}
+        self.max_size=max_size
 
     def add_new(self, datetime):
         self.acks_for_msg__at[datetime] = []
+        print(len(self.acks_for_msg__at))
+        
+        if(len(self.acks_for_msg__at)>self.max_size):
+        	keys=list(self.acks_for_msg__at.keys())
+        	print(keys)
+        	time=keys[0]
+        	print(time)
+        	print(self.acks_for_msg__at[time])
+        	del self.acks_for_msg__at[time]
+        
+        	
 
     def ret_acks(self, datetime):
         return self.acks_for_msg__at[datetime]
 
     def add_ack(self, datetime, peerName):
         self.acks_for_msg__at[datetime].append(peerName)
+        
