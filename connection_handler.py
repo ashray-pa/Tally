@@ -1,7 +1,6 @@
 import socket
-import sys
 import time
-from ping3 import ping
+# from ping3 import ping
 from utils import Utilities
 
 FORMAT = "utf-8"
@@ -35,8 +34,7 @@ class Connection:
         print("1")
         time.sleep(1)
         self.running = False
-        sys.exit()
-
+    
     def sendMessage(self, msg, dt, id):
         self.sock.send(utils.post_req("msg", msg, dt, id).encode())
 
