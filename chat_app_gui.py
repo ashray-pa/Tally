@@ -77,7 +77,7 @@ class ChatApp:
             print("----- server is down -----")
             self.server_down_cnt = self.server_down_cnt - 1
             if self.server_down_cnt <= 0:
-                self.server_down_close()
+                self.conn.server_down_close()
                 self.window.destroy()        
         self.msg_input.delete('1.0', 'end')
 
@@ -140,8 +140,12 @@ class ChatApp:
     def ping_(self):
         while True:
             self.conn.ping_()
-            if self.conn.server_status == "down": 
-                self.window.destroy()
-
+            try:
+                if self.conn.server_status == "down": 
+                    self.window.destroy()
+                    exit(0)
+            except:
+                print('---client closed---')
+                exit(0)
 
 gui = ChatApp()
