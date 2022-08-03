@@ -30,76 +30,84 @@ def handle_connections():
         if len(connections) > 0:
                 readables, writeables, errors = select.select(
                     connections, connections, connections, 1.0)
+                try:
+                    for conn_r in readables:
+                        try:
+                            mess_ = conn_r.recv(HEADER).decode(FORMAT)
+                            type = ''
+                            req_type = ''
+                            res_type = ''
+                            
+                            for line in mess_.split('\r\n'):
+                                if(line.split(': ')[0] == 'Req-Type' or line.split(': ')[0] == 'Res-Type'):
+                                    if(line.split(': ')[0] == 'Req-Type'):
+                                        type = 'req'
+                                        req_type = line.split(': ')[1]
+                                    else:
+                                        type = 'res'
+                                        res_type = line.split(': ')[1]
 
-                for conn_r in readables:
-                    try:
-                        mess_ = conn_r.recv(HEADER).decode(FORMAT)
-                        type = ''
-                        req_type = ''
-                        res_type = ''
+                            if type == 'req':
+                                if req_type == 'msg':
+                                    msg_sent_time = ""
+                                    client_id = ""
+                                    for line in mess_.split('\r\n'):
+                                        if (line.split(': '))[0] == 'Time':
+                                            msg_sent_time = line.split(': ')[1]
+                                        elif (line.split(': '))[0] == 'ClientID':
+                                            client_id = line.split(': ')[1]
 
-                        for line in mess_.split('\r\n'):
-                            if(line.split(': ')[0] == 'Req-Type' or line.split(': ')[0] == 'Res-Type'):
-                                if(line.split(': ')[0] == 'Req-Type'):
-                                    type = 'req'
-                                    req_type = line.split(': ')[1]
-                                else:
-                                    type = 'res'
-                                    res_type = line.split(': ')[1]
+                                    message = mess_.split("\r\n\r\n")[1]
+                                    
+                                    sendToAllClients(writeables, message, str(msg_sent_time), client_id)
+                                    client_acks.get(client_id).add_new(msg_sent_time)
+                                    
+                                    startTimer = threading.Thread(target=checkForAcks, args=(client_id, msg_sent_time))
+                                    startTimer.start()
+                                    utils.send_ack(socket=conn_r, isMsg=True, dt=msg_sent_time, id=client_id)
 
-                        if type == 'req':
-                            if req_type == 'msg':
-                                msg_sent_time = ""
-                                client_id = ""
-                                for line in mess_.split('\r\n'):
-                                    if (line.split(': '))[0] == 'Time':
-                                        msg_sent_time = line.split(': ')[1]
-                                    elif (line.split(': '))[0] == 'ClientID':
-                                        client_id = line.split(': ')[1]
+                                elif req_type == 'ping':
+                                    msg_sent_time = ""
+                                    client_id = ""
+                                    for line in mess_.split('\r\n'):
+                                        if (line.split(': '))[0] == 'Time':
+                                            msg_sent_time = line.split(': ')[1]
+                                        elif (line.split(': '))[0] == 'ClientID':
+                                            client_id = line.split(': ')[1]
+                                    #print("pinged by:", conn_r.getpeername())
+                                    utils.send_ack(socket=conn_r, isMsg=False, id=client_id)
 
-                                message = mess_.split("\r\n\r\n")[1]
+                            elif type == 'res':
+                                if res_type == 'ack':
+                                    #print("message received by:", conn_r.getpeername())
+                                    ack = threading.Thread(target=collectAcks, args=(mess_, conn_r))
+                                    ack.start()
+                                    #print(client_acks[client_id].acks_for_msg__at)
+
+                            if not mess_:
+                                print('Disconnected',conn_r)
+                                if conn_r in connections:
+                                    connections.remove(conn_r)
+                                addr = conn_r.getpeername()
+                                client_names.remove(addr)
+                                conn_r.close()
                                 
-                                sendToAllClients(writeables, message, str(msg_sent_time), client_id)
-                                client_acks.get(client_id).add_new(msg_sent_time)
-                                
-                                startTimer = threading.Thread(target=checkForAcks, args=(client_id, msg_sent_time))
-                                startTimer.start()
-                                utils.send_ack(socket=conn_r, isMsg=True, dt=msg_sent_time, id=client_id)
-
-                            elif req_type == 'ping':
-                                msg_sent_time = ""
-                                client_id = ""
-                                for line in mess_.split('\r\n'):
-                                    if (line.split(': '))[0] == 'Time':
-                                        msg_sent_time = line.split(': ')[1]
-                                    elif (line.split(': '))[0] == 'ClientID':
-                                        client_id = line.split(': ')[1]
-                                #print("pinged by:", conn_r.getpeername())
-                                utils.send_ack(socket=conn_r, isMsg=False, id=client_id)
-
-                        elif type == 'res':
-                            if res_type == 'ack':
-                                #print("message received by:", conn_r.getpeername())
-                                ack = threading.Thread(target=collectAcks, args=(mess_, conn_r))
-                                ack.start()
-                                #print(client_acks[client_id].acks_for_msg__at)
-
-                        if not mess_:
+                        except Exception as error:
                             print('Disconnected',conn_r)
                             if conn_r in connections:
                                 connections.remove(conn_r)
+                            addr = conn_r.getpeername()
+                            client_names.remove(addr)
                             conn_r.close()
-                            
-                    except Exception as error:
-                        print(error)
-                        print("--- error ---")
-                for err in errors:
-                    try:
-                        print(f"error in connection {err}")
-                        connections.remove(err)
-                        err.close()
-                    except:
-                        pass
+                    for err in errors:
+                        try:
+                            print(f"error in connection {err}")
+                            connections.remove(err)
+                            err.close()
+                        except:
+                            pass
+                except:
+                    print('-----Server crashed----')
 
 def receive():
     con_thread = threading.Thread(target=handle_connections, args=())
@@ -162,3 +170,6 @@ def sendToAllClients(writeables, message, msg_sent_time, client_id):
 print("--- server running ---")
 print(f"{HOST} is listening")
 receive()
+
+
+#remove disconnected sockets from client peer names
