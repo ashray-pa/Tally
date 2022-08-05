@@ -5,6 +5,7 @@ from tkinter import simpledialog
 import tkinter.scrolledtext
 from connection_handler import Connection
 from utils import Utilities
+###############################################
 
 HOST = "127.0.1.1"
 PORT = 9095
