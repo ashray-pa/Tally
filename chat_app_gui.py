@@ -24,10 +24,13 @@ class ChatApp:
         self.gui_done = False
         self.conn.running = True
 
-        gui_thread = threading.Thread(target=self.gui_)
+        # gui_thread = threading.Thread(target=self.gui_)
         recv_thread = threading.Thread(target=self.read_)
         down_thread = threading.Thread(target=self.ping_)
-        gui_thread.start()
+        # gui_thread.daemon = True
+        recv_thread.daemon = True
+        down_thread.daemon = True
+        # gui_thread.start()
         recv_thread.start()
         down_thread.start()
 
@@ -136,6 +139,7 @@ class ChatApp:
         self.conn.running = False
         self.window.destroy()
         self.conn.closeConn()
+        exit(0)
 
 
     def ping_(self):
@@ -150,3 +154,4 @@ class ChatApp:
                 exit(0)
 
 gui = ChatApp()
+gui.gui_()

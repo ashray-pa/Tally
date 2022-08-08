@@ -14,7 +14,11 @@ class Connection:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect_to_server(self):
-        self.sock.connect((self.host, self.port))
+        try:
+            self.sock.connect((self.host, self.port))
+        except Exception as e:
+            print("server is not up")
+            exit(0)
         self.running = False
         self.server_status = "up"
         self.server_down_cnt = 1
