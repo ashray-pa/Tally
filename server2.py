@@ -6,10 +6,12 @@ import select
 from uuid import uuid4
 import sys
 import time
+from datetime import datetime
 
 from connection_handler import Connection
 from utils import Utilities
 from utils import Acknowldgements
+#from chat_app_gui import gui
 
 HOST = "127.0.1.1"
 FORMAT = "utf-8"
@@ -24,6 +26,32 @@ HEADER = 1024
 serverConn = Connection(HOST, PORT)
 utils = Utilities()
 serverConn.listen_to_clients() 
+
+
+def handle_request(mess_,conn_r,req_type,writeables):
+	if req_type == 'msg':
+		msg_sent_time = ""
+		client_id = ""
+		for line in mess_.split('\r\n'):
+			if (line.split(': '))[0] == 'Time':
+				msg_sent_time = line.split(': ')[1]
+			elif (line.split(': '))[0] == 'ClientID':
+				client_id = line.split(': ')[1]
+		message = mess_.split("\r\n\r\n")[1]
+		sendToAllClients(writeables, message, str(msg_sent_time), client_id)
+		client_acks.get(client_id).add_new(msg_sent_time)
+		startTimer = threading.Thread(target=checkForAcks, args=(client_id, msg_sent_time,conn_r))
+		startTimer.start()
+	elif req_type == 'ping':
+		msg_sent_time = ""
+		client_id = ""
+		for line in mess_.split('\r\n'):
+			if (line.split(': '))[0] == 'Time':
+				msg_sent_time = line.split(': ')[1]
+			elif (line.split(': '))[0] == 'ClientID':
+				client_id = line.split(': ')[1]
+		#print("pinged by:", conn_r.getpeername())
+		utils.send_ack(socket=conn_r, isMsg=False, id=client_id)
 
 def handle_connections():
     while True:
@@ -48,40 +76,12 @@ def handle_connections():
                                         res_type = line.split(': ')[1]
 
                             if type == 'req':
-                                if req_type == 'msg':
-                                    msg_sent_time = ""
-                                    client_id = ""
-                                    for line in mess_.split('\r\n'):
-                                        if (line.split(': '))[0] == 'Time':
-                                            msg_sent_time = line.split(': ')[1]
-                                        elif (line.split(': '))[0] == 'ClientID':
-                                            client_id = line.split(': ')[1]
-
-                                    message = mess_.split("\r\n\r\n")[1]
-                                    
-                                    sendToAllClients(writeables, message, str(msg_sent_time), client_id)
-                                    client_acks.get(client_id).add_new(msg_sent_time)
-                                    
-                                    startTimer = threading.Thread(target=checkForAcks, args=(client_id, msg_sent_time))
-                                    startTimer.start()
-                                    utils.send_ack(socket=conn_r, isMsg=True, dt=msg_sent_time, id=client_id)
-
-                                elif req_type == 'ping':
-                                    msg_sent_time = ""
-                                    client_id = ""
-                                    for line in mess_.split('\r\n'):
-                                        if (line.split(': '))[0] == 'Time':
-                                            msg_sent_time = line.split(': ')[1]
-                                        elif (line.split(': '))[0] == 'ClientID':
-                                            client_id = line.split(': ')[1]
-                                    #print("pinged by:", conn_r.getpeername())
-                                    utils.send_ack(socket=conn_r, isMsg=False, id=client_id)
+                                handle_request(mess_,conn_r,req_type,writeables)
 
                             elif type == 'res':
                                 if res_type == 'ack':
                                     #print("message received by:", conn_r.getpeername())
-                                    ack = threading.Thread(target=collectAcks, args=(mess_, conn_r))
-                                    ack.start()
+                                    collectAcks(mess_,conn_r)
                                     #print(client_acks[client_id].acks_for_msg__at)
 
                             if not mess_:
@@ -89,14 +89,17 @@ def handle_connections():
                                 if conn_r in connections:
                                     connections.remove(conn_r)
                                 addr = conn_r.getpeername()
+                                print("line 92")
                                 client_names.remove(addr)
                                 conn_r.close()
                                 
                         except Exception as error:
+                       
                             print('Disconnected',conn_r)
                             if conn_r in connections:
                                 connections.remove(conn_r)
                             addr = conn_r.getpeername()
+                            print("line 101")
                             client_names.remove(addr)
                             conn_r.close()
                     for err in errors:
@@ -120,7 +123,7 @@ def receive():
         client_names.append(addr)
         client_id = str(uuid4())
         clients.append(client_id)
-        acks = Acknowldgements(10)
+        acks = Acknowldgements(20)
         client_acks[client_id] = acks
 
         try:
@@ -131,22 +134,32 @@ def receive():
 # def sendToEachClient(socket, message, msg_sent_time, client_id):
 #     socket.send(utils.post_req('msg', message, msg_sent_time, client_id).encode())
 
-def checkForAcks(client_id, msg_sent_time):
+def checkForAcks(client_id, msg_sent_time,conn_r):
     global client_acks
-    print("message sent by %s, at %s" %(client_id, msg_sent_time))
-    time.sleep(5)
-    recv_acks = client_acks[client_id].ret_acks(msg_sent_time)
-    not_recv = []
-    for peer in client_names:
-        if peer not in recv_acks:
-            not_recv.append(peer)
-    
-    if len(not_recv)==0:
-        print("message has been sent to all clients")
-    else:
-        print("Below clients did not receive message:")
-        for peer in not_recv:
-            print(peer)
+    print("message sent by %s, at %s " %(client_id, msg_sent_time))
+    while True:
+    	t1=datetime.strptime(msg_sent_time,"%Y-%m-%d %H:%M:%S.%f")
+    	t2=datetime.now()
+    	diff=t2-t1
+    	sec=diff.total_seconds()
+    	recv_acks=client_acks[client_id].ret_acks(msg_sent_time)
+    	
+    	if(sec>=3 or len(recv_acks)==len(client_names)):
+    		recv_acks = client_acks[client_id].ret_acks(msg_sent_time)
+    		print(sec)
+    		not_recv = []
+    		for peer in client_names:
+    			if peer not in recv_acks:
+    				not_recv.append(peer)
+    		if len(not_recv)==0:
+    			print("message has been sent to all clients")
+    			utils.send_ack(socket=conn_r, isMsg=True, dt=msg_sent_time, id=client_id)
+    		else:
+    			print("Below clients did not receive message:")
+    			for peer in not_recv:
+    				print(peer)
+    		#print("i was here")
+    		break
 
 def collectAcks(mess_, conn_r):
     msg_sent_time = ""
@@ -157,7 +170,7 @@ def collectAcks(mess_, conn_r):
         elif (line.split(': '))[0] == 'ClientID':
             client_id = line.split(': ')[1]
 
-    client_acks[client_id].add_ack(msg_sent_time, conn_r.getpeername())
+    client_acks[client_id].add_ack(msg_sent_time, conn_r.getpeername())#here
 
 def sendToAllClients(writeables, message, msg_sent_time, client_id):
     for conn_s in writeables:
