@@ -5,6 +5,7 @@ from tkinter import simpledialog
 import tkinter.scrolledtext
 from connection_handler import Connection
 from utils import Utilities
+from tkinter import messagebox
 ###############################################
 
 HOST = "127.0.1.1"
@@ -136,10 +137,12 @@ class ChatApp:
 
 
     def stop_(self):
-        self.conn.running = False
-        self.window.destroy()
-        self.conn.closeConn()
-        exit(0)
+        res = messagebox.askokcancel('Ok Close', 'Are You sure?')
+        if res:
+            self.conn.running = False
+            self.window.destroy()
+            self.conn.closeConn()
+            exit(0)
 
 
     def ping_(self):
