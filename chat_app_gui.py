@@ -21,6 +21,7 @@ class ChatApp:
         self.name = simpledialog.askstring(
             "Name", "Enter your name", parent=msg)
         self.client_id = self.conn.recvId().split('\r\n\r\n')[1]
+        self.client_id=self.client_id.split("\r\n")[0]
 
         self.gui_done = False
         self.conn.running = True
@@ -122,6 +123,7 @@ class ChatApp:
                                 client_id = line.split(': ')[1]
 
                         message = mess_.split("\r\n\r\n")[1]
+                        message=message.split("\r\n")[0]
                         self.text_area.config(state="normal")
                         self.text_area.insert("end", message)
                         self.text_area.yview("end")
