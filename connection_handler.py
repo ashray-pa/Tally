@@ -40,14 +40,24 @@ class Connection:
         self.running = False
     
     def sendMessage(self, msg, dt, id):
-        self.sock.send(utils.post_req("msg", msg, dt, id).encode())
+        self.sock.sendall(utils.post_req("msg", msg, dt, id).encode())
 
     def recvFun(self):
-        return self.sock.recv(1024).decode(FORMAT)
+        frag=[]
+        mess_=self.sock.recv(1024).decode(FORMAT)
+        while mess_:
+            frag.append(mess_)
+            l=len(mess_)
+            p=mess_[l-3:l]
+            if p=="EOF":
+                break
+            mess_=self.sock.recv(1024).decode(FORMAT)
+           
+        return "".join(frag)
 
     def ping_(self):
         try:
-            self.sock.send(utils.get_req("ping", PING_CODE).encode())
+            self.sock.sendall(utils.get_req("ping", PING_CODE).encode())
             time.sleep(5)
         except Exception as e:
             self.server_status = "down"
