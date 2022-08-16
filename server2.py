@@ -32,26 +32,33 @@ def handle_request(mess_,conn_r,req_type,writeables):
         if req_type == 'msg':
             msg_sent_time = ""
             client_id = ""
+
             for line in mess_.split('\r\n'):
                 if (line.split(': '))[0] == 'Time':
                     msg_sent_time = line.split(': ')[1]
                 elif (line.split(': '))[0] == 'ClientID':
                     client_id = line.split(': ')[1]
+                    
             message = mess_.split("\r\n\r\n")[1]
             message=message.split("\r\n")[0]
+
             sendToAllClients(writeables, message, str(msg_sent_time), client_id)
             client_acks.get(client_id).add_new(msg_sent_time)
+
             startTimer = threading.Thread(target=checkForAcks, args=(client_id, msg_sent_time,conn_r))
             startTimer.start()
+
         elif req_type == 'ping':
             msg_sent_time = ""
             client_id = ""
+
             for line in mess_.split('\r\n'):
                 if (line.split(': '))[0] == 'Time':
                     msg_sent_time = line.split(': ')[1]
                 elif (line.split(': '))[0] == 'ClientID':
                     client_id = line.split(': ')[1]
             #print("pinged by:", conn_r.getpeername())
+
             utils.send_ack(socket=conn_r, isMsg=False, id=client_id)
 
 def handle_connections():
@@ -97,7 +104,7 @@ def handle_connections():
                                     #print(client_acks[client_id].acks_for_msg__at)
 
                             if not mess_:
-                                print('Disconnected',conn_r)
+                                print('Disconnected ',conn_r.getpeername())
                                 if conn_r in connections:
                                     connections.remove(conn_r)
                                 addr = conn_r.getpeername()
@@ -107,11 +114,12 @@ def handle_connections():
                                 
                         except Exception as error:
                        
-                            print('Disconnected',conn_r)
+                            print('Disconnected ',conn_r.getpeername())
                             if conn_r in connections:
                                 connections.remove(conn_r)
+
                             addr = conn_r.getpeername()
-                            print("line 101")
+                            
                             client_names.remove(addr)
                             conn_r.close()
                     for err in errors:
@@ -129,8 +137,9 @@ def handle_connections():
 #     socket.send(utils.post_req('msg', message, msg_sent_time, client_id).encode())
 
 def checkForAcks(client_id, msg_sent_time,conn_r):
+    
     global client_acks
-    print("message sent by %s, at %s " %(client_id, msg_sent_time))
+    print("message sent by %s, at %s " %(conn_r.getpeername(), msg_sent_time))
     while True:
         t1=datetime.strptime(msg_sent_time,"%Y-%m-%d %H:%M:%S.%f")
         t2=datetime.now()
