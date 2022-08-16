@@ -1,3 +1,4 @@
+from pickle import FALSE
 import socket
 import time
 # from ping3 import ping
@@ -12,16 +13,31 @@ class Connection:
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_status="up"
+        self.running=False
 
     def connect_to_server(self):
-        try:
-            self.sock.connect((self.host, self.port))
-        except Exception as e:
-            print("server is not up")
-            exit(0)
-        self.running = False
-        self.server_status = "up"
-        self.server_down_cnt = 1
+        
+        c=1
+        while c<=3:
+            try:
+                self.sock.connect((self.host, self.port))
+                c=5
+                #print("i was here")
+            except socket.error as e:
+                print("server is not up ",c)
+                c+=1
+                time.sleep(15)
+                #exit(0)
+        if c!=4:
+            self.running = True
+            self.server_status = "up"
+            self.server_down_cnt = 1
+        else:
+            self.server_status="down"
+            
+        
+
 
     def listen_to_clients(self):
         self.sock.bind((self.host, self.port))
@@ -38,6 +54,7 @@ class Connection:
         print("1")
         time.sleep(1)
         self.running = False
+        
     
     def sendMessage(self, msg, dt, id):
         self.sock.sendall(utils.post_req("msg", msg, dt, id).encode())
@@ -57,11 +74,15 @@ class Connection:
 
     def ping_(self):
         try:
+            
             self.sock.sendall(utils.get_req("ping", PING_CODE).encode())
             time.sleep(5)
         except Exception as e:
+            self.running=False
+            print("line 81")
             self.server_status = "down"
-            self.server_down_close()
+            
+            #self.server_down_close()
 
     def recvId(self):
         return self.sock.recv(1024).decode(FORMAT)
