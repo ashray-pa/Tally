@@ -26,7 +26,6 @@ class Acknowldgements:
 
     def add_new(self, datetime):
         self.acks_for_msg__at[datetime] = []
-        print(len(self.acks_for_msg__at))
         if(len(self.acks_for_msg__at)>self.max_size):
             keys = list(self.acks_for_msg__at.keys())
             time = keys[0]
