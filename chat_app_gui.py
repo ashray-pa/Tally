@@ -193,7 +193,6 @@ class ChatApp:
                         exit(0)        
             except:
                 print('---client closed---')
-                self.window.destroy()
                 exit(0)
 
             
