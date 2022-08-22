@@ -12,12 +12,15 @@ utils = Utilities()
 
 class ChatApp:
     def __init__(self):
-        self.conn = Connection(HOST, PORT)
-        self.conn.connect_to_server()
         msg = tkinter.Tk()
         msg.withdraw()
         self.name = simpledialog.askstring(
             "Name", "Enter your name", parent=msg)
+        if self.name == None:
+            exit(0)
+        self.conn = Connection(HOST, PORT)
+        self.conn.connect_to_server()
+
         self.client_id = self.conn.recvId().split('\r\n\r\n')[1]
 
         self.gui_done = False
