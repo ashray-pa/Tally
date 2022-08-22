@@ -26,6 +26,8 @@ class ChatApp:
             msg.withdraw()
             self.name = simpledialog.askstring(
                 "Name", "Enter your name", parent=msg)
+            if self.name == None:
+                exit(0)
 
 
         # gui_thread = threading.Thread(target=self.gui_)
@@ -57,11 +59,6 @@ class ChatApp:
             down_thread.start()
         else:
             self.conn.server_down_close()
-
-             
-        
-          
-
         #print("i have no clue")
 
     def gui_(self):
