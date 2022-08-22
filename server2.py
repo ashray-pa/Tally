@@ -73,7 +73,7 @@ def handle_connections():
                             data=conn_r.recv(1024).decode(FORMAT)                            
                             while data:
                                 l=len(data)
-                                p=data[l-3:l]
+                                p=data[l-3:l] 
                                 frag.append(data)
                                 if(p=="EOF"):
                                     break
