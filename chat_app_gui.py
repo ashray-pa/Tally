@@ -20,7 +20,7 @@ class ChatApp:
         #self.conn = Connection(HOST, PORT)
         #self.conn.connect_to_server()
        
-        self.reconnection()
+        self.start_connection()
         if(self.conn.running):
             msg = tkinter.Tk()
             msg.withdraw()
@@ -39,7 +39,7 @@ class ChatApp:
         # down_thread.start()
 
 
-    def reconnection(self):
+    def start_connection(self):
         
         self.conn=Connection(HOST,PORT)
         self.conn.connect_to_server()
@@ -186,7 +186,7 @@ class ChatApp:
                 if self.conn.server_status == "down":
                     
                     self.conn.closeConn() 
-                    self.reconnection()     
+                    self.start_connection()     
                     
                     if(self.conn.running==False):     
                         self.window.destroy() 
