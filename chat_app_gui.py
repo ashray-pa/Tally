@@ -20,12 +20,14 @@ class ChatApp:
         #self.conn = Connection(HOST, PORT)
         #self.conn.connect_to_server()
        
-        self.reconnection()
+        self.start_connection()
         if(self.conn.running):
             msg = tkinter.Tk()
             msg.withdraw()
             self.name = simpledialog.askstring(
                 "Name", "Enter your name", parent=msg)
+            if self.name == None:
+                exit(0)
 
 
         # gui_thread = threading.Thread(target=self.gui_)
@@ -39,7 +41,7 @@ class ChatApp:
         # down_thread.start()
 
 
-    def reconnection(self):
+    def start_connection(self):
         
         self.conn=Connection(HOST,PORT)
         self.conn.connect_to_server()
@@ -57,11 +59,6 @@ class ChatApp:
             down_thread.start()
         else:
             self.conn.server_down_close()
-
-             
-        
-          
-
         #print("i have no clue")
 
     def gui_(self):
@@ -186,14 +183,13 @@ class ChatApp:
                 if self.conn.server_status == "down":
                     
                     self.conn.closeConn() 
-                    self.reconnection()     
+                    self.start_connection()     
                     
                     if(self.conn.running==False):     
                         self.window.destroy() 
                         exit(0)        
             except:
                 print('---client closed---')
-                self.window.destroy()
                 exit(0)
 
             

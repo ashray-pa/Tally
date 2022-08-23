@@ -6,16 +6,19 @@ class Utilities:
         return 'POST HTTP/1.1 \r\nContent-Type: text/html\r\nContent-Length: %d\r\nReq-Type: %s\r\nTime: %s\r\nClientID: %s\r\n\r\n%s\r\nEOF'%(len(data),
          req_type, dt, id, data)
 
+
     def get_req(self, req_type, data):
-        return 'GET HTTP/1.1 \r\nContent-Type: text/html\r\nContent-Length: %d\r\nReq-Type: %s\r\n\r\n%s\r\nEOF' %(len(data), req_type, data)
+        return 'GET HTTP/1.1 \r\nContent-Type: text/plain\r\nContent-Length: %d\r\nReq-Type: %s\r\n\r\n%s\r\nEOF' %(len(data), req_type, data)
 
     def send_ack(self, socket, isMsg, id, dt=None):
         if isMsg:
             socket.sendall('HTTP/1.1 \r\nContent-Type: text/html\r\nRes-Type: ack\r\nTime: {dt}\r\nClientID: {id}\r\nEOF'.format(dt=dt, id=id)
             .encode())
-            #print('HTTP/1.1 \r\nContent-Type: text/html\r\nRes-Type: ack\r\nTime:%s'.encode() %dt)
+    # def post_res(self, res_type, data, dt, id):
+    #     return 'HTTP/1.1 \r\nContent-Type: text/plain\r\nContent-Length: %d\r\nRes-Type: %s\r\nTime: %s\r\nClientID: %s\r\n\r\n%s\r\nEOF' %(len(data), res_type, dt, id, data)
+    #print('HTTP/1.1 \r\nContent-Type: text/html\r\nRes-Type: ack\r\nTime:%s'.encode() %dt)
         else:
-            socket.sendall('HTTP/1.1 \r\nContent-Type: text/html\r\nRes-Type: ackp\r\nEOF'.encode())
+            socket.sendall('HTTP/1.1 \r\nContent-Type: text/plain\r\nRes-Type: ackp\r\nEOF'.encode())
 
 
 class Acknowledgements:

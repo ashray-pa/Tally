@@ -75,7 +75,7 @@ def handle_connections():
                             data=conn_r.recv(1024).decode(FORMAT)                            
                             while data:
                                 l=len(data)
-                                p=data[l-3:l]
+                                p=data[l-3:l] 
                                 frag.append(data)
                                 if(p=="EOF"):
                                     break
@@ -108,7 +108,7 @@ def handle_connections():
                                 if conn_r in connections:
                                     connections.remove(conn_r)
                                 addr = conn_r.getpeername()
-                                print("line 92")
+                                print(f"{addr} gone")
                                 client_names.remove(addr)
                                 conn_r.close()
                                 
