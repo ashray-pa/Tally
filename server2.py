@@ -108,7 +108,7 @@ def handle_connections():
                                 if conn_r in connections:
                                     connections.remove(conn_r)
                                 addr = conn_r.getpeername()
-                                print("line 92")
+                                print(f"{addr} gone")
                                 client_names.remove(addr)
                                 conn_r.close()
                                 
