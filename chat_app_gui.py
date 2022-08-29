@@ -48,7 +48,7 @@ class ChatApp:
         if self.conn.running:
             self.client_id = self.conn.recvId().split('\r\n\r\n')[1]
             self.client_id=self.client_id.split("\r\n")[0]
-            print("the new client id is ",self.client_id)
+            #print("the new client id is ",self.client_id)
             recv_thread = threading.Thread(target=self.read_)
             down_thread = threading.Thread(target=self.ping_)
         # gui_thread.daemon = True
@@ -123,7 +123,7 @@ class ChatApp:
 
                 if mess_.startswith("HTTP"):
                     for line in mess_.split('\r\n'):
-                        if(line.split(': ')[0] == 'Res-Type'):
+                        if line.split(': ')[0] == 'Res-Type':
                             res_type = line.split(': ')[1]
                     if True:
                         if res_type == 'ack':
