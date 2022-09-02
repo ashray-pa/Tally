@@ -75,7 +75,7 @@ class Connection:
     def ping_(self):
         try:
             
-            self.sock.sendall(utils.get_req("ping", PING_CODE).encode())
+            self.sock.sendall(utils.post_data("ping", PING_CODE).encode())
             time.sleep(5)
         except Exception as e:
             self.running=False

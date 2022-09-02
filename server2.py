@@ -199,7 +199,7 @@ def receive():
         client_acks[client_id] = acks
 
         try:
-            client.sendall(utils.get_req("id", client_id).encode())
+            client.sendall(utils.post_data("id", client_id).encode())
         except BrokenPipeError:
             print("----- server is down -----")
 
